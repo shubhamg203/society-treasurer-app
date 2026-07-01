@@ -16,7 +16,6 @@ services:
     rootDir: backend
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn app:app
-    plan: free
     envVars:
       - key: SECRET_KEY
         generateValue: true          # Render auto-generates a secure random value
@@ -38,7 +37,6 @@ services:
     rootDir: frontend
     buildCommand: npm install && npm run build
     staticPublishPath: dist
-    plan: free
     routes:
       - type: rewrite
         source: /*
@@ -50,6 +48,5 @@ services:
 # ── PostgreSQL Database ─────────────────────────────────────────
 databases:
   - name: society-treasurer-db
-    plan: free
     databaseName: society_treasurer
     user: treasurer_user
