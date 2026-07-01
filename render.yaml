@@ -1,0 +1,55 @@
+# render.yaml — One-click deployment configuration for Render.com
+# Docs: https://render.com/docs/blueprint-spec
+#
+# Usage:
+#   1. Push this repo to GitHub
+#   2. Go to render.com → New → Blueprint
+#   3. Connect your GitHub repo — Render will read this file automatically
+#   4. Set the SECRET_KEY, JWT_SECRET_KEY env vars in the Render dashboard
+#      (they are marked as generateValue: true below so Render auto-generates them)
+
+services:
+  # ── Backend: Flask API ──────────────────────────────────────────
+  - type: web
+    name: society-treasurer-api
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    plan: free
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true          # Render auto-generates a secure random value
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: society-treasurer-db
+          property: connectionString
+      - key: CORS_ORIGINS
+        value: https://society-treasurer-frontend.onrender.com
+      - key: PYTHON_VERSION
+        value: "3.11.0"
+
+  # ── Frontend: React/Vite static site ───────────────────────────
+  - type: web
+    name: society-treasurer-frontend
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    plan: free
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_URL
+        value: https://society-treasurer-api.onrender.com/api
+
+# ── PostgreSQL Database ─────────────────────────────────────────
+databases:
+  - name: society-treasurer-db
+    plan: free
+    databaseName: society_treasurer
+    user: treasurer_user
